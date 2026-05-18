@@ -5,6 +5,7 @@ from datetime import datetime
 class DocumentResponse(BaseModel):
     id: int
     filename: str
+    extracted_text: str | None
     upload_time: datetime
 
     class Config:
