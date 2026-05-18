@@ -1,7 +1,9 @@
+import json
 import os
 from sqlalchemy.orm import Session
 from app.models.document import Document
 from app.services.pdf_service import extract_text_from_pdf
+from app.services.embedding_service import generate_embedding
 
 UPLOAD_DIR = "uploads"
 
@@ -16,9 +18,12 @@ def save_document(db: Session, filename: str, content: bytes) -> Document:
     
     # Extract text from PDF
     extracted_text = extract_text_from_pdf(file_path)
+
+    # Generate embedding for extracted text
+    embedding = generate_embedding(extracted_text)
     
     # Create document record in database
-    document = Document(filename=filename, extracted_text=extracted_text)
+    document = Document(filename=filename, extracted_text=extracted_text, embedding=json.dumps(embedding))
     db.add(document)
     db.commit()
     db.refresh(document)
