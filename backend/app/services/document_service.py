@@ -9,6 +9,7 @@ from app.models.chunk import DocumentChunk
 from app.services.pdf_service import extract_text_from_pdf
 from app.services.embedding_service import generate_embedding
 from app.services.chunk_service import chunk_text
+from app.services.cleaning_service import clean_text
 
 UPLOAD_DIR = "uploads"
 
@@ -23,7 +24,9 @@ def save_document(
     with open(file_path, "wb") as file:
         file.write(content)
 
-    extracted_text = extract_text_from_pdf(file_path)
+    raw_text = extract_text_from_pdf(file_path)
+
+    extracted_text = clean_text(raw_text)
 
     document = Document(
         filename=filename,
