@@ -3,7 +3,7 @@ import numpy as np
 
 from sqlalchemy.orm import Session
 
-from app.models.document import Document
+from app.models.chunk import DocumentChunk
 from app.services.embedding_service import generate_embedding
 
 
@@ -16,22 +16,28 @@ def cosine_similarity(vec1, vec2):
     )
 
 
-def semantic_search(db: Session, query: str):
+def semantic_search(
+    db: Session,
+    query: str
+):
     query_embedding = generate_embedding(query)
-    documents = db.query(Document).all()
-    results = []
-    for doc in documents:
-        if not doc.embedding:
-            continue
 
-        stored_embedding = json.loads(doc.embedding)
+    chunks = db.query(DocumentChunk).all()
+
+    results = []
+
+    for chunk in chunks:
+        stored_embedding = json.loads(chunk.chunk_embedding)
+
         similarity = cosine_similarity(
             query_embedding,
             stored_embedding
         )
+
         results.append({
-            "id": doc.id,
-            "filename": doc.filename,
+            "document_id": chunk.document_id,
+            "chunk_id": chunk.id,
+            "chunk_text": chunk.chunk_text,
             "similarity": float(similarity)
         })
 
