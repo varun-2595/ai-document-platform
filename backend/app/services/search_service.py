@@ -5,45 +5,36 @@ from sqlalchemy.orm import Session
 
 from app.models.chunk import DocumentChunk
 from app.services.embedding_service import generate_embedding
+from app.db.opensearch import client
+from app.services.embedding_service import generate_embedding
 
 
-def cosine_similarity(vec1, vec2):
-    vec1 = np.array(vec1)
-    vec2 = np.array(vec2)
+INDEX_NAME = "document_chunks"
 
-    return np.dot(vec1, vec2) / (
-        np.linalg.norm(vec1) * np.linalg.norm(vec2)
-    )
-
-
-def semantic_search(
-    db: Session,
-    query: str
-):
+def semantic_search(query: str):
     query_embedding = generate_embedding(query)
 
-    chunks = db.query(DocumentChunk).all()
+    search_body = {
+        "size": 5,
+        "query": {
+            "knn": {
+                "embedding": {
+                    "vector": query_embedding,
+                    "k": 5
+                }
+            }
+        }
+    }
+
+    response = client.search(index=INDEX_NAME, body=search_body)
 
     results = []
-
-    for chunk in chunks:
-        stored_embedding = json.loads(chunk.chunk_embedding)
-
-        similarity = cosine_similarity(
-            query_embedding,
-            stored_embedding
-        )
-
+    for hit in response["hits"]["hits"]:
+        source = hit["_source"]
         results.append({
-            "document_id": chunk.document_id,
-            "chunk_id": chunk.id,
-            "chunk_text": chunk.chunk_text,
-            "similarity": float(similarity)
+            "document_id": source["document_id"],
+            "chunk_text": source["chunk_text"],
+            "score": hit["_score"]
         })
 
-    results.sort(
-        key=lambda x: x["similarity"],
-        reverse=True
-    )
-
-    return results[:5]
+    return results
