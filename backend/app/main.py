@@ -8,6 +8,7 @@ from app.api.search import router as search_router
 from app.models.chunk import DocumentChunk
 from app.db.database import Base
 from app.services.opensearch_service import create_index
+from app.api.search import router as rag_router
 
 
 app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
@@ -18,3 +19,4 @@ create_index()
 app.include_router(health_router)
 app.include_router(upload_router)
 app.include_router(search_router)
+app.include_router(rag_router)
