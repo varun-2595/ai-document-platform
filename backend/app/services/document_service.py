@@ -1,6 +1,7 @@
 import os
 import json
 
+from celery import chunks
 from sqlalchemy.orm import Session
 
 from app.models.document import Document
@@ -38,6 +39,11 @@ def save_document(
     db.refresh(document)
 
     chunks = chunk_text(extracted_text)
+    print(f"TOTAL CHUNKS: {len(chunks)}")
+
+    for index, chunk in enumerate(chunks[:3]):
+        print(f"\nCHUNK {index + 1}")
+        print(chunk[:300])
 
     for chunk in chunks:
         embedding = generate_embedding(chunk)
