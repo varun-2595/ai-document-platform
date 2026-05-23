@@ -10,3 +10,4 @@ class Document(Base):
     extracted_text = Column(String, nullable=True)
     embedding = Column(String, nullable=True)
     upload_time = Column(DateTime, default=datetime.utcnow)
+    s3_key = Column(String, nullable=False)
