@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.document import Document
 from app.tasks.document_tasks import process_document
 from app.services.s3_services import upload_file_to_s3
+from app.core.logger import logger
 
 UPLOAD_DIR = Path(__file__).resolve().parents[2] / "uploads"
 
@@ -14,6 +15,7 @@ def save_document(
     filename: str,
     content: bytes
 ):
+    logger.info(f"Uploading document: {filename}")
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
     file_path = UPLOAD_DIR / Path(filename).name
@@ -37,9 +39,12 @@ def save_document(
     db.commit()
     db.refresh(document)
 
+    logger.info(f"Document uploaded to s3: {s3_key}")
+
     process_document.delay(
         document.id,
         str(file_path)
     )
+    logger.info(f"Queued document for processing: {document.id}")
 
     return document

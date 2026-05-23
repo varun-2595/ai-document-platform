@@ -12,6 +12,7 @@ from app.services.cleaning_service import clean_text
 from app.services.chunk_service import chunk_text
 from app.services.embedding_service import generate_embedding
 from app.services.opensearch_service import index_chunk
+from app.core.logger import logger
 
 
 @celery.task
@@ -20,6 +21,7 @@ def process_document(
     file_path: str
 ):
     try:
+        logger.info(f"Processing document: {document_id}")
         db = SessionLocal()
 
         document = db.query(Document).filter(
@@ -31,6 +33,8 @@ def process_document(
         document.extracted_text = cleaned_text
         document.status = "PROCESSED"
         db.commit()
+
+        logger.info(f"Extracted and cleaned text for document: {document_id}")
 
         chunks = chunk_text(cleaned_text)
 
@@ -57,14 +61,17 @@ def process_document(
         document.status = "COMPLETED"
 
         db.commit()
-
         db.close()
+
+        logger.info(f"Completed processing document: {document_id}")
 
     except Exception as e:
         document.status = "FAILED"
         document.error_message = str(e)
+        logger.error(f"Error processing document {document_id}: {str(e)}")
         db.commit()
         raise e
 
     finally:
+            logger.info(f"Finished processing document: {document_id}")
             db.close()
