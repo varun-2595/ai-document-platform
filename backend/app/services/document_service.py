@@ -29,7 +29,8 @@ def save_document(
 
     document = Document(
         filename=filename,
-        s3_key=upload_result
+        s3_key=upload_result,
+        status="UPLOADED"
     )
 
     db.add(document)

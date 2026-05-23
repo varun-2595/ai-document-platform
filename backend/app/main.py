@@ -9,6 +9,7 @@ from app.models.chunk import DocumentChunk
 from app.db.database import Base
 from app.services.opensearch_service import create_index
 from app.api.rag import router as rag_router
+from app.api.document_status import router as document_status_router
 
 
 app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
@@ -20,3 +21,4 @@ app.include_router(health_router)
 app.include_router(upload_router)
 app.include_router(search_router)
 app.include_router(rag_router)
+app.include_router(document_status_router)

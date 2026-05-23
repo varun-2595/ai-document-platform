@@ -19,42 +19,52 @@ def process_document(
     document_id: int,
     file_path: str
 ):
-    db = SessionLocal()
+    try:
+        db = SessionLocal()
 
-    document = db.query(Document).filter(
-        Document.id == document_id
-    ).first()
+        document = db.query(Document).filter(
+            Document.id == document_id
+        ).first()
 
-    raw_text = extract_text_from_pdf(file_path)
+        raw_text = extract_text_from_pdf(file_path)
+        cleaned_text = clean_text(raw_text)
+        document.extracted_text = cleaned_text
+        document.status = "PROCESSED"
+        db.commit()
 
-    cleaned_text = clean_text(raw_text)
+        chunks = chunk_text(cleaned_text)
 
-    document.extracted_text = cleaned_text
+        for chunk in chunks:
+            embedding = generate_embedding(chunk)
 
-    db.commit()
+            document_chunk = DocumentChunk(
+                document_id=document.id,
+                chunk_text=chunk,
+                chunk_embedding=json.dumps(embedding)
+            )
 
-    chunks = chunk_text(cleaned_text)
+            db.add(document_chunk)
 
-    for chunk in chunks:
-        embedding = generate_embedding(chunk)
+            db.flush()
 
-        document_chunk = DocumentChunk(
-            document_id=document.id,
-            chunk_text=chunk,
-            chunk_embedding=json.dumps(embedding)
-        )
+            index_chunk(
+                chunk_id=document_chunk.id,
+                document_id=document.id,
+                chunk_text=chunk,
+                embedding=embedding
+            )
 
-        db.add(document_chunk)
+        document.status = "COMPLETED"
 
-        db.flush()
+        db.commit()
 
-        index_chunk(
-            chunk_id=document_chunk.id,
-            document_id=document.id,
-            chunk_text=chunk,
-            embedding=embedding
-        )
+        db.close()
 
-    db.commit()
+    except Exception as e:
+        document.status = "FAILED"
+        document.error_message = str(e)
+        db.commit()
+        raise e
 
-    db.close()
+    finally:
+            db.close()

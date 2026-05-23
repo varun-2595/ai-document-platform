@@ -7,6 +7,8 @@ class DocumentResponse(BaseModel):
     filename: str
     extracted_text: str | None
     upload_time: datetime
+    status: str
+    error_message: str | None
 
     class Config:
         from_attributes = True
