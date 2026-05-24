@@ -26,7 +26,11 @@ async def log_requests(request: Request, call_next):
     return response
 
 Base.metadata.create_all(bind=engine)
-create_index()
+try:
+    create_index()
+    print("OpenSearch index created successfully")
+except Exception as e:
+    print(f"OpenSearch not ready yet: {e}")
 
 app.include_router(health_router)
 app.include_router(upload_router)

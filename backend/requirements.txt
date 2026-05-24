@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+python-dotenv
+pydantic
+openai
+opensearch-py
+numpy
+pymupdf
+python-multipart
+redis
+celery
+boto3
+requests
